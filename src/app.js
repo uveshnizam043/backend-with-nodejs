@@ -22,4 +22,4 @@ app.use(express.static("public"));
 //CRUD operation on cookie
 app.use(cookieParser())
 
-export { app };
+export default app
