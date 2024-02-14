@@ -26,5 +26,5 @@ app.use(cookieParser())
 
 
  //route declaration
- app.use("/user",userRouter)
+ app.use("/api/v1/users",userRouter)
 export default app
