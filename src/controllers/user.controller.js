@@ -10,7 +10,7 @@ const registerUser = asyncHandler(async (req, res) => {
     // check if user already exist :username , 
     // check for images, check for avatar
     // upload them to cloudier, avatar
-    // create user object-create entry in db
+    // create use                                                                                                                                                                                                                                                                                                                                                                                                                                                               r object-create entry in db
     // remove password and refresh token field from response
     // check for user creation
     //return res
