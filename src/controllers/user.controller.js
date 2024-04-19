@@ -19,9 +19,9 @@ const registerUser = asyncHandler(async (req, res) => {
     // return res
 
 
-    const { fullName, email, username, password } = req.body
+    const { /* fullName */email, username, password } = req.body
     if (
-        [fullName, email, username, password].some((field) => field?.trim() === "")
+        [/* fullName */ email, username, password].some((field) => field?.trim() === "")
     ) {
         throw new ApiError(400, "All fields are required")
     }
@@ -35,31 +35,31 @@ const registerUser = asyncHandler(async (req, res) => {
     }
     //console.log(req.files);
 
-    const avatarLocalPath = req.files?.avatar[0]?.path;
-    //const coverImageLocalPath = req.files?.coverImage[0]?.path;
+    // const avatarLocalPath = req.files?.avatar[0]?.path;
+    // //const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
-    let coverImageLocalPath;
-    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
-        coverImageLocalPath = req.files.coverImage[0].path
-    }
+    // let coverImageLocalPath;
+    // if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+    //     coverImageLocalPath = req.files.coverImage[0].path
+    // }
 
 
-    if (!avatarLocalPath) {
-        throw new ApiError(400, "Avatar file is required")
-    }
+    // if (!avatarLocalPath) {
+    //     throw new ApiError(400, "Avatar file is required")
+    // }
 
-    const avatar = await uploadOnCloudinary(avatarLocalPath)
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+    // const avatar = await uploadOnCloudinary(avatarLocalPath)
+    // const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
-    if (!avatar) {
-        throw new ApiError(400, "Avatar file is required")
-    }
+    // if (!avatar) {
+    //     throw new ApiError(400, "Avatar file is required")
+    // }
 
 
     const user = await User.create({
-        fullName,
-        avatar: avatar.url,
-        coverImage: coverImage?.url || "",
+        // fullName,
+        // avatar: avatar.url,
+        // coverImage: coverImage?.url || "",
         email,
         password,
         username: username.toLowerCase()
@@ -146,7 +146,7 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+    const incomingRefreshToken = req.body.refreshToken
     if (!incomingRefreshToken) {
         throw new ApiError(401, "unauthorized request")
     }
@@ -158,7 +158,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             throw new ApiError(401, "Invalid refresh token")
 
         }
-        if (user?.refreshToken !== decodedToken) {
+   
+        if (user?.refreshToken !== incomingRefreshToken) {
             throw new ApiError(401, "Refresh token is expired or used")
 
         }
@@ -175,12 +176,13 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
                 new ApiResponse(
                     200,
                     {
-                        accessToken, refreshToken: newRefreshToken
+                        accessToken, refreshToken: newRefreshToken,user
                     },
                     "refresh token refreshed"
                 )
             )
     } catch (error) {
+        console.log("error123",error)
         throw new ApiError(401, error?.message || "unauthorized request")
     }
 

@@ -19,15 +19,15 @@ const userSchema = new Schema(
             lowercase: true,
             trim: true, 
         },
-        fullName: {
-            type: String,
-            required: true,
-            trim: true, 
-            index: true
-        },
+        // fullName: {
+        //     type: String,
+        //     required: true,
+        //     trim: true, 
+        //     index: true
+        // },
         avatar: {
             type: String, // cloudinary url
-            required: true,
+            required: false,
         },
         coverImage: {
             type: String, // cloudinary url
@@ -44,7 +44,13 @@ const userSchema = new Schema(
         },
         refreshToken: {
             type: String
-        }
+        },
+        bookmarks: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: "Bookmark"
+            }
+        ],
 
     },
     {
@@ -69,7 +75,7 @@ userSchema.methods.generateAccessToken = function(){
             _id: this._id,
             email: this.email,
             username: this.username,
-            fullName: this.fullName
+            // fullName: this.fullName
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
@@ -85,11 +91,11 @@ userSchema.methods.generateRefreshToken = function(){
             _id: this._id,
             email: this.email,
             username: this.username,
-            fullName: this.fullName
+            // fullName: this.fullName
         },
-        process.env.ACCESS_TOKEN_SECRET,
+        process.env.REFRESH_TOKEN_SECRET,
         {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+            expiresIn: process.env.REFREH_TOKEN_EXPIRY
         }
     )
 }
