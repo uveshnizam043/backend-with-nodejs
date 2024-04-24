@@ -2,6 +2,7 @@ import { ApiError } from "../utils/ApiError.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { Tweet } from "../models/tweet.model.js"
+import { PollTweet } from "../models/pollTweet.model.js"
 import { ReplyTweet } from "../models/replyTweet.model.js"
 // import { PostLike } from "../models/tweetLike.model.js"
 import { Bookmark } from "../models/bookmark.model.js"
@@ -17,7 +18,7 @@ const postTweet = asyncHandler(async (req, res) => {
     ) {
         throw new ApiError(400, "All fields are required")
     }
-    const newTweet = await Tweet.create({
+const newTweet = await Tweet.create({
         content, author, user
     })
     return res.status(201).json(
@@ -26,25 +27,46 @@ const postTweet = asyncHandler(async (req, res) => {
 
 })
 
-const scheduleTweet = asyncHandler(async (req, res) => {
-    console.log("req.boyd", req.body)
-    const { minute, hour, day, month } = req.body
-    console.log(" minute, hour, day, month ", minute, hour, day, month)
-
-    cron.schedule(minute, hour, day, month, '*' ,async () => { // This schedule runs at 10:00 AM every day
-        const { content, author, user } = req.body
-    if (
-        [content, author, user].some((field) => field?.trim() === "")
-    ) {
-        throw new ApiError(400, "All fields are required")
-    }
-    const newTweet = await Tweet.create({
-        content, author, user
+const postPollTweet = asyncHandler(async (req, res) => {
+    console.log("req.body",req.body)
+    const { question, choices, user } = req.body
+    // if (
+    //     [ question, choices, user].some((field) => field?.trim() === "")
+    // ) {
+    //     throw new ApiError(400, "All fields are required")
+    // }
+    const newPollTweet = await Tweet.create({
+        content:question, choices, user , author:user
     })
     return res.status(201).json(
-        new ApiResponse(200, newTweet, "tweet is post Successfully")
+        new ApiResponse(200, newPollTweet, "new Poll tweet is post Successfully")
     )
-});
+
+})
+
+const scheduleTweet = asyncHandler(async (req, res) => {
+    try {
+        console.log("req.boyd", req.body)
+        const { minute, hour, day, month, content, author, user } = req.body
+
+        const tr=`0 ${minute} ${hour} ${day} ${month} *`
+        cron.schedule(tr, async () => { // This schedule runs at 10:00 AM every day
+            console.log("welcome to india")
+            if (
+                [content, author, user].some((field) => field?.trim() === "")
+            ) {
+                throw new ApiError(400, "All fields are required")
+            }
+            const newTweet = await Tweet.create({
+                content, author, user
+            })
+            return res.status(201).json(
+                new ApiResponse(200, newTweet, "tweet is post Successfully")
+            )
+        })
+    } catch (error) {
+console.log("error in schedule task",error)
+    }
 })
 
 const repostTweet = asyncHandler(async (req, res) => {
@@ -202,10 +224,59 @@ const getTweets = asyncHandler(async (req, res) => {
                     }
                 }
             }
+        },
+        {
+            $project: {
+                _id: 1,
+                content: 1,
+                likes: 1,
+                createdAt: 1,
+                isTweetRepost: 1,
+                user: 1,
+                author: 1,
+                quoteTweetInfo: 1,
+                bookmarkList: 1,
+                replies: 1,
+                poll: { $literal: null } // Adding a placeholder for poll field
+            }
+        },
+        {
+            $unionWith: {
+                coll: 'polltweets',
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: 'users',
+                            localField: 'user',
+                            foreignField: '_id',
+                            as: 'user'
+                        }
+                    },
+                    {
+                        $unwind: '$user'
+                    },
+                    {
+                        $project: {
+                            _id: 1,
+                            question: 1,
+                            choices: 1,
+                            user: {
+                                _id: '$user._id',
+                                username: '$user.username',
+                                email: '$user.email'
+                            },
+                            createdAt: 1,
+                            updatedAt: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $sort: { createdAt: -1 } // Sort merged results by createdAt
         }
     ]);
-
-    console.log("get tweet", tweets)
+    
     return res.status(200).json(
         new ApiResponse(200, tweets, "tweets successfully")
     )
@@ -395,4 +466,4 @@ const postQuoteTweet = asyncHandler(async (req, res) => {
         throw new ApiError(500, `Something went wrong while post quote the tweet: ${error}`);
     }
 })
-export { postTweet, getTweets, updateLikes, createReplyTweet, getTweet, bookmarkPost, repostTweet, postQuoteTweet, scheduleTweet } 
+export { postTweet, getTweets, updateLikes, createReplyTweet, getTweet, bookmarkPost, repostTweet, postQuoteTweet, scheduleTweet,postPollTweet } 

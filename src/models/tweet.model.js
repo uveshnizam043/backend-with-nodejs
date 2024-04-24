@@ -11,6 +11,14 @@ const tweetSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  // choice for poll tweet
+  choices: [{
+    choice: String,
+    choicePercentage: {
+        type: Number,
+        default: 0
+    }
+}],
   quoteTweetId:{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Tweet',
