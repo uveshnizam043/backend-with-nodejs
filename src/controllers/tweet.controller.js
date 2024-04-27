@@ -18,7 +18,7 @@ const postTweet = asyncHandler(async (req, res) => {
     ) {
         throw new ApiError(400, "All fields are required")
     }
-const newTweet = await Tweet.create({
+    const newTweet = await Tweet.create({
         content, author, user
     })
     return res.status(201).json(
@@ -28,7 +28,7 @@ const newTweet = await Tweet.create({
 })
 
 const postPollTweet = asyncHandler(async (req, res) => {
-    console.log("req.body",req.body)
+    console.log("req.body", req.body)
     const { question, choices, user } = req.body
     // if (
     //     [ question, choices, user].some((field) => field?.trim() === "")
@@ -36,7 +36,7 @@ const postPollTweet = asyncHandler(async (req, res) => {
     //     throw new ApiError(400, "All fields are required")
     // }
     const newPollTweet = await Tweet.create({
-        content:question, choices, user , author:user
+        content: question, choices, user, author: user
     })
     return res.status(201).json(
         new ApiResponse(200, newPollTweet, "new Poll tweet is post Successfully")
@@ -49,7 +49,7 @@ const scheduleTweet = asyncHandler(async (req, res) => {
         console.log("req.boyd", req.body)
         const { minute, hour, day, month, content, author, user } = req.body
 
-        const tr=`0 ${minute} ${hour} ${day} ${month} *`
+        const tr = `0 ${minute} ${hour} ${day} ${month} *`
         cron.schedule(tr, async () => { // This schedule runs at 10:00 AM every day
             console.log("welcome to india")
             if (
@@ -65,7 +65,7 @@ const scheduleTweet = asyncHandler(async (req, res) => {
             )
         })
     } catch (error) {
-console.log("error in schedule task",error)
+        console.log("error in schedule task", error)
     }
 })
 
@@ -86,6 +86,7 @@ const repostTweet = asyncHandler(async (req, res) => {
 
 })
 const getTweets = asyncHandler(async (req, res) => {
+    
     const tweets = await Tweet.aggregate([
         {
             $lookup: {
@@ -183,6 +184,7 @@ const getTweets = asyncHandler(async (req, res) => {
         {
             $project: {
                 content: 1,
+                choices: 1,
                 likes: 1,
                 createdAt: 1,
                 isTweetRepost: 1,
@@ -276,7 +278,8 @@ const getTweets = asyncHandler(async (req, res) => {
             $sort: { createdAt: -1 } // Sort merged results by createdAt
         }
     ]);
-    
+console.log("tweets",tweets)
+
     return res.status(200).json(
         new ApiResponse(200, tweets, "tweets successfully")
     )
@@ -295,6 +298,29 @@ const getTweet = asyncHandler(async (req, res) => {
         )
     } catch (error) {
         throw new ApiError(500, "Something went wrong tweet fetch")
+    }
+})
+const updatePollTweet = asyncHandler(async (req, res) => {
+    const { choice, tweet } = req.body
+
+    try {
+        // Find the tweet by ID and update the choicePercentage of the matching choice
+        const updatedTweet = await Tweet.findOneAndUpdate(
+            { _id: tweet, "choices.choice": choice },
+            { $inc: { "choices.$.choicePercentage": 1 } },
+            { new: true }
+        );
+
+        if (!updatedTweet) {
+            throw new ApiError(401, error?.message || "tweet is not found")
+        }
+
+        return res.status(201).json(
+            new ApiResponse(201, updatedTweet, "poll choice is submit ")
+        )
+    } catch (error) {
+        throw new ApiError(401, error?.message || "unauthorized request")
+
     }
 })
 const updateLikes = asyncHandler(async (req, res) => {
@@ -466,4 +492,4 @@ const postQuoteTweet = asyncHandler(async (req, res) => {
         throw new ApiError(500, `Something went wrong while post quote the tweet: ${error}`);
     }
 })
-export { postTweet, getTweets, updateLikes, createReplyTweet, getTweet, bookmarkPost, repostTweet, postQuoteTweet, scheduleTweet,postPollTweet } 
+export { postTweet, getTweets, updateLikes, createReplyTweet, getTweet, bookmarkPost, repostTweet, postQuoteTweet, scheduleTweet, postPollTweet ,updatePollTweet} 
