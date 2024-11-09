@@ -1,4 +1,4 @@
-import mongoose from "mongoose"
+ import mongoose from "mongoose"
 // Change Schema: Tracks individual changes to the document
 const ChangeSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
@@ -20,7 +20,7 @@ const DocumentSchema = new mongoose.Schema({
       },
       permission: {
         type: String,
-        enum: ["read", "write"],
+        enum: ["read", "write",'owner','editor'],
         required: true,
       },
     },
