@@ -1,16 +1,24 @@
- import mongoose from "mongoose"
-// Change Schema: Tracks individual changes to the document
-const ChangeSchema = new mongoose.Schema({
-  timestamp: { type: Date, default: Date.now },
-  userId: { type: String, required: true },  // User making the change
-  changes: { type: String, required: true },  // Description of the change (can store diff or full text)
-});
+import mongoose from "mongoose"
+import { type } from "os";
 
-// Document Schema: Tracks the entire document content and all changes
+
+// const ChangeSchema = new mongoose.Schema({
+//   timestamp: { type: Date, default: Date.now },
+//   userId: { type: String, required: true },  
+//   changes: { type: String, required: true }, 
+// });
+
+
+
 const DocumentSchema = new mongoose.Schema({
-  title: { type: String, required: true },  // Title of the document
-  content: { type: String, required: false },  // Document's full content
-  ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },  // Reference to the owner (User)
+  title: { type: String },
+  content: { type: String, required: false },
+  ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  currentVersion: { type: Number, default: 1 },
+  initialDocumentTitle: {
+    type: Boolean,
+    default: true
+  },
   collaborators: [
     {
       userId: {
@@ -20,13 +28,12 @@ const DocumentSchema = new mongoose.Schema({
       },
       permission: {
         type: String,
-        enum: ["read", "write",'owner','editor'],
+        enum: ["read", "write", 'owner', 'editor'],
         required: true,
       },
     },
   ],
 });
 
-// Exporting the document model
 export const Document = mongoose.model("Document", DocumentSchema)
 

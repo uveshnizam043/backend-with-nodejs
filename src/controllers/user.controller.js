@@ -4,11 +4,14 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { User } from "../models/user.model.js"
 import jwt from "jsonwebtoken"
+// import { emailQueue } from '../config/emailQueue.js';
+import redisConnection from '../config/redis-connection.js';
+
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
-
-    if ([email, password].some((field) => field?.trim() === "")) {
+    const { username, email, password } = req.body;
+    console.log("reqbody", req.body)
+    if ([username, email, password].some((field) => field?.trim() === "")) {
         throw new ApiError(400, "All fields are required");
     }
 
@@ -21,13 +24,30 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(409, "User with email already exists");
     }
 
+
+
+
     // Create the user
     let user;
     try {
         user = await User.create({
+            username,
             email,
             password,
         });
+
+        // await emailQueue.add('sendVerificationEmail', {
+
+        //   });
+        const queueData = {
+            email: user.email,
+            username: user.username,
+            verificationToken: user._id,
+        }
+        await redisConnection.lPush('userVerifyEmail', JSON.stringify(queueData));
+        return res.status(201).json(
+            new ApiResponse(201, user, "Invitation link has been send")
+        );
     } catch (error) {
         console.log(" email, password", email, password)
         console.log("error", error)
@@ -53,6 +73,22 @@ const registerUser = asyncHandler(async (req, res) => {
         new ApiResponse(201, createdUser, "User registered successfully")
     );
 });
+const verifyUser = asyncHandler(async (req, res) => {
+    const { token } = req.params;
+    const user = await User.findOne({ _id: token });
+
+    if (!user || user.status == "verified") {
+        throw new ApiError(404, "Invalid Link");
+    }
+    const updateUser = await User.findOneAndUpdate(
+        { _id: token },
+        { $set: { status: 'verified' } },
+        { new: true, runValidators: true }
+    );
+    return res.status(200).json(
+        new ApiResponse(200, updateUser, "Invitation link has been send")
+    );
+});
 
 const verifyToken = asyncHandler(async (req, res) => {
     return res
@@ -76,9 +112,14 @@ const loginUser = asyncHandler(async (req, res) => {
     if (!user) {
         throw new ApiError(400, "user not exist")
     }
+    if (user.status === "unverified") {
+        throw new ApiError(403, "Please confirm your  email first")
+    }
+
+
     const isPasswordValid = await user.isPasswordCorrect(password)
     if (!isPasswordValid) {
-        throw new ApiError(40, "Invalid user")
+        throw new ApiError(400, "Invalid user")
 
     }
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user.id)
@@ -279,4 +320,4 @@ const updateAvatarCoverImage = asyncHandler(async (req, res) => {
             )
         )
 })
-export { registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateAvatar, updateAvatarCoverImage, verifyToken } 
+export { registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateAvatar, updateAvatarCoverImage, verifyToken, verifyUser } 

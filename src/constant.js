@@ -1,1 +1,1 @@
-export const DB_NAME="uveshdb"
+export const DB_NAME="collaborative-document-app"

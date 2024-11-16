@@ -27,8 +27,8 @@ import emailService from './routes/emailService.routes.js'
 
 //routes declaration
 app.use("/api/v1/users", userRouter)
-app.use("/api/v1/tweet", tweetRouter)
-app.use("/api/v1/tts", textToSpeech)
+// app.use("/api/v1/tweet", tweetRouter)
+// app.use("/api/v1/tts", textToSpeech)
 app.use("/api/v1/document", documentRoutes)
 app.use("/api/v1/email", emailService)
 
